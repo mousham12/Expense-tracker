@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ExpenseFlow | Smart Budget & Expense Tracker</title>
+    <!-- Chart.js CDN for Pie Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome 6 (Free Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e6edf4 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        /* main app container */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ========== PAGE SWITCHING ========== */
+        .page {
+            transition: opacity 0.25s ease;
+        }
+        .hidden-page {
+            display: none;
+        }
+
+        /* ========== HOME PAGE STYLES ========== */
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+        .hero-icon {
+            font-size: 4rem;
+            color: #2c7da0;
+            margin-bottom: 1rem;
+        }
+        .home-title {
+            font-size: 2.8rem;
+            background: linear-gradient(135deg, #1e2b3c, #2c7da0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+        .home-sub {
+            color: #2c3e50;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        .feature-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.8rem;
+            margin: 2rem 0;
+            max-width: 900px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 2rem;
+            padding: 1.5rem;
+            width: 220px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: 0.2s;
+            border: 1px solid rgba(44,125,160,0.2);
+        }
+        .feature-card i {
+            font-size: 2.2rem;
+            color: #2c7da0;
+            margin-bottom: 0.8rem;
+        }
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.4rem;
+        }
+        .feature-card p {
+            font-size: 0.8rem;
+            color: #5f6c7a;
+        }
+        .launch-btn {
+            background: #2c7da0;
+            border: none;
+            padding: 14px 38px;
+            font-size: 1.2rem;
+            border-radius: 60px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 8px 18px rgba(44,125,160,0.3);
+            margin-top: 1rem;
+        }
+        .launch-btn:hover {
+            transform: scale(1.02);
+            background: #1f617e;
+        }
+
+        /* ========== MAIN PAGE STYLES (identical to previous tracker) ========== */
+        .header {
+            text-align: center;
+            margin-bottom: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #1e2b3c, #0f2c3b);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .back-home-btn {
+            background: #eef2f7;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .back-home-btn:hover {
+            background: #2c7da0;
+            color: white;
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.8rem;
+        }
+        .left-panel {
+            flex: 1.2;
+            min-width: 280px;
+        }
+        .right-panel {
+            flex: 2;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem 1.8rem;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .card h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 5px solid #2c7da0;
+            padding-left: 1rem;
+            color: #1f2e3a;
+        }
+        .budget-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        .budget-item {
+            background: #f8fafd;
+            border-radius: 1.2rem;
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e2edf2;
+        }
+        .budget-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        .budget-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1f3b4c;
+        }
+        .budget-amount {
+            font-size: 0.85rem;
+            color: #2c7da0;
+            font-weight: 600;
+        }
+        .budget-actions button {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            margin: 0 5px;
+            cursor: pointer;
+            color: #7f8c8d;
+            transition: 0.2s;
+        }
+        .budget-actions button:hover { color: #e74c3c; }
+        .add-section-form {
+            margin-top: 1.2rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .add-section-form input {
+            flex: 2;
+            padding: 10px 14px;
+            border-radius: 2rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            outline: none;
+        }
+        .btn {
+            background: #2c7da0;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 2rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-secondary { background: #334e68; }
+        .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+        .btn:hover { opacity: 0.85; transform: scale(0.97); }
+        .transaction-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 120px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #2c3e50;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 1.5rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+        .entries-list {
+            max-height: 280px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.7rem 0.8rem;
+            margin-bottom: 8px;
+            border-radius: 1.2rem;
+            background: #ffffffea;
+            border-left: 6px solid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .entry-income { border-left-color: #2ecc71; }
+        .entry-expense { border-left-color: #e74c3c; }
+        .entry-details { display: flex; flex-direction: column; }
+        .entry-category { font-weight: 700; font-size: 0.9rem; }
+        .entry-desc { font-size: 0.7rem; color: #5f6c7a; }
+        .entry-amount { font-weight: 800; font-size: 1rem; }
+        .delete-entry { background: none; border: none; color: #e67e22; cursor: pointer; font-size: 1rem; padding: 5px; }
+        .summary-cards {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+        .summary-card {
+            flex: 1;
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .summary-card h3 { font-size: 0.9rem; font-weight: 500; color: #4a6272; }
+        .summary-number { font-size: 1.7rem; font-weight: 800; margin-top: 8px; }
+        .green-text { color: #2ecc71; }
+        .red-text { color: #e74c3c; }
+        .pie-chart-container { display: flex; justify-content: center; margin-top: 1rem; }
+        canvas#expensePieChart { max-height: 250px; max-width: 100%; }
+        hr { margin: 0.8rem 0; border-color: #e2edf2; }
+        .badge { font-size: 0.7rem; background: #ecf0f1; padding: 2px 8px; border-radius: 20px; }
+        .warning-banner { text-align: center; margin-top: 10px; font-weight: 600; }
+        @media (max-width: 760px) {
+            body { padding: 1rem; }
+            .card { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- ============================================= -->
+    <!-- PAGE 1: HOME PAGE (Feature showcase + launch) -->
+    <!-- ============================================= -->
+    <div id="homePage" class="page">
+        <div class="home-container">
+            <div class="hero-icon">
+                <i class="fas fa-chart-pie"></i> <i class="fas fa-wallet"></i>
+            </div>
+            <h1 class="home-title">ExpenseFlow Tracker</h1>
+            <p class="home-sub">Smart budgeting, real-time income vs expense insights, and interactive pie charts.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-layer-group"></i>
+                    <h3>Custom Budgets</h3>
+                    <p>Create & remove sections (Food, Clothes, Travel...) with editable budgets.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-plus-circle"></i>
+                    <h3>Income & Expenses</h3>
+                    <p>Add transactions, track totals. Red alert if expenses > income, green if healthy.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-pie"></i>
+                    <h3>Expense Pie Chart</h3>
+                    <p>Visual breakdown of spending by category — updates instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-trash-alt"></i>
+                    <h3>Deprecate Sections</h3>
+                    <p>User can delete any budget section — full control over planning.</p>
+                </div>
+            </div>
+            
+            <button id="goToMainBtn" class="launch-btn">
+                <i class="fas fa-arrow-right"></i> Launch Dashboard
+            </button>
+            <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #5f6c7a;">
+                <i class="fas fa-check-circle"></i> Manage budgets, track income/expenses, see live pie chart.
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- PAGE 2: MAIN APP (Full functionality) -->
+    <!-- ============================================= -->
+    <div id="mainPage" class="page hidden-page">
+        <!-- Header with Back Arrow to Home -->
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button id="backToHomeBtn" class="back-home-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </button>
+                <h1><i class="fas fa-coins"></i> ExpenseFlow · Smart Dashboard</h1>
+            </div>
+            <div class="sub" style="font-size: 0.85rem; color:#2c3e50;">
+                <i class="fas fa-chart-line"></i> Budgets | Income vs Expenses
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <!-- LEFT PANEL: BUDGET SECTIONS -->
+            <div class="left-panel">
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> Budget Sections</h2>
+                    <div id="budgetListContainer" class="budget-sections">
+                        <!-- dynamic budget sections will appear here -->
+                    </div>
+                    <div class="add-section-form">
+                        <input type="text" id="newSectionName" placeholder="e.g., Entertainment, Travel" autocomplete="off">
+                        <input type="number" id="newSectionBudget" placeholder="Budget amount" step="any" value="0">
+                        <button id="addBudgetBtn" class="btn btn-sm"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div style="margin-top: 12px; font-size: 12px; color: #4a6272;">
+                        <i class="fas fa-info-circle"></i> Budgets are for planning. Click ✏️ to edit, 🗑️ to remove (deprecate).
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 1rem;">
+                    <h2><i class="fas fa-piggy-bank"></i> Budget Overview</h2>
+                    <div id="totalBudgetDisplay">Total Budget: $0</div>
+                    <div class="badge" style="margin-top: 8px;">Remove any section = reduce budget plan</div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: INCOME/EXPENSE + PIE CHART -->
+            <div class="right-panel">
+                <div class="card">
+                    <h2><i class="fas fa-exchange-alt"></i> Income / Expense Entry</h2>
+                    <div class="transaction-form">
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="transType">
+                                <option value="income">💰 Income</option>
+                                <option value="expense">💸 Expense</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Category / Section</label>
+                            <select id="transCategory">
+                                <option value="Food">Food</option>
+                                <option value="Clothes">Clothes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="transDesc" placeholder="e.g., Groceries" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount ($)</label>
+                            <input type="number" id="transAmount" step="any" value="0">
+                        </div>
+                        <button id="addTransactionBtn" class="btn"><i class="fas fa-save"></i> Add Entry</button>
+                    </div>
+                    <hr>
+                    <div class="summary-cards">
+                        <div class="summary-card"><h3>Total Income</h3><div id="totalIncomeDisplay" class="summary-number green-text">$0</div></div>
+                        <div class="summary-card"><h3>Total Expenses</h3><div id="totalExpenseDisplay" class="summary-number">$0</div></div>
+                        <div class="summary-card"><h3>Net Balance</h3><div id="netBalanceDisplay" class="summary-number">$0</div></div>
+                    </div>
+                    <div id="balanceWarning" class="warning-banner"></div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-list-ul"></i> Recent Transactions</h2>
+                    <div id="transactionsList" class="entries-list"></div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-chart-pie"></i> Expense Breakdown (by Category)</h2>
+                    <div class="pie-chart-container">
+                        <canvas id="expensePieChart" width="300" height="250" style="max-width:100%; height:auto;"></canvas>
+                    </div>
+                    <div style="font-size:12px; text-align:center; margin-top:8px;">Pie chart updates based on expenses per category</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- DATA MODELS (shared between pages but main page only) ----------
+    let budgetSections = [
+        { id: "sec1", name: "Food", amount: 500 },
+        { id: "sec2", name: "Clothes", amount: 300 }
+    ];
+    let transactions = [];
+
+    // Helper: unique id
+    function uid() {
+        return Date.now() + '-' + Math.random().toString(36).substring(2, 8);
+    }
+
+    // Sample initial transactions
+    function initSampleTransactions() {
+        if(transactions.length === 0) {
+            transactions.push({
+                id: uid(),
+                type: "income",
+                category: "Salary",
+                description: "Monthly salary",
+                amount: 2500,
+                date: new Date().toLocaleDateString()
+            });
+            transactions.push({
+                id: uid(),
+                type: "expense",
+                category: "Food",
+                description: "Supermarket",
+                amount: 120,
+                date: new Date().toLocaleDateString()
+            });
+            transactions.push({
+                id: uid(),
+                type: "expense",
+                category: "Clothes",
+                description: "Jacket",
+                amount: 85,
+                date: new Date().toLocaleDateString()
+            });
+            transactions.push({
+                id: uid(),
+                type: "expense",
+                category: "Entertainment",
+                description: "Movie night",
+                amount: 40,
+                date: new Date().toLocaleDateString()
+            });
+            if(!budgetSections.some(s => s.name === "Entertainment")) {
+                budgetSections.push({ id: uid(), name: "Entertainment", amount: 200 });
+            }
+        }
+    }
+
+    // totals
+    function getTotals() {
+        let totalIncome = 0, totalExpense = 0;
+        transactions.forEach(t => {
+            if(t.type === "income") totalIncome += t.amount;
+            else totalExpense += t.amount;
+        });
+        return { totalIncome, totalExpense };
+    }
+
+    // ========== RENDER FUNCTIONS (main page UI) ==========
+    let pieChartInstance = null;
+
+    function renderBudgetSections() {
+        const container = document.getElementById('budgetListContainer');
+        if (!container) return;
+        if (budgetSections.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align:center;">No budget sections. Add one!</div>';
+            return;
+        }
+        container.innerHTML = '';
+        budgetSections.forEach(section => {
+            const div = document.createElement('div');
+            div.className = 'budget-item';
+            div.innerHTML = `
+                <div class="budget-info">
+                    <span class="budget-name"><i class="fas fa-tag"></i> ${escapeHtml(section.name)}</span>
+                    <span class="budget-amount">$${section.amount.toFixed(2)}</span>
+                </div>
+                <div class="budget-actions">
+                    <button class="edit-budget-btn" data-id="${section.id}" title="Edit budget amount"><i class="fas fa-edit"></i></button>
+                    <button class="delete-budget-btn" data-id="${section.id}" title="Remove section (deprecate)"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        document.querySelectorAll('.edit-budget-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.getAttribute('data-id');
+                const section = budgetSections.find(s => s.id === id);
+                if(section) {
+                    let newAmount = prompt(`Edit budget amount for "${section.name}":`, section.amount);
+                    if(newAmount !== null && !isNaN(parseFloat(newAmount))) {
+                        section.amount = parseFloat(newAmount);
+                        refreshMainUI();
+                    }
+                }
+            });
+        });
+        document.querySelectorAll('.delete-budget-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.getAttribute('data-id');
+                budgetSections = budgetSections.filter(s => s.id !== id);
+                refreshMainUI();
+            });
+        });
+    }
+
+    function renderTransactionsList() {
+        const container = document.getElementById('transactionsList');
+        if (!container) return;
+        if (transactions.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px;">No transactions yet</div>';
+            return;
+        }
+        container.innerHTML = '';
+        [...transactions].reverse().forEach(trans => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = `entry ${trans.type === 'income' ? 'entry-income' : 'entry-expense'}`;
+            const sign = trans.type === 'income' ? '+' : '-';
+            const amountColor = trans.type === 'income' ? '#2ecc71' : '#e74c3c';
+            entryDiv.innerHTML = `
+                <div class="entry-details">
+                    <span class="entry-category">${escapeHtml(trans.category)} ${trans.type === 'income' ? '📈' : '📉'}</span>
+                    <span class="entry-desc">${escapeHtml(trans.description)} · ${trans.date || new Date().toLocaleDateString()}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="entry-amount" style="color:${amountColor};">${sign}$${Math.abs(trans.amount).toFixed(2)}</span>
+                    <button class="delete-entry" data-id="${trans.id}"><i class="fas fa-trash-can"></i></button>
+                </div>
+            `;
+            container.appendChild(entryDiv);
+        });
+        document.querySelectorAll('.delete-entry').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.getAttribute('data-id');
+                transactions = transactions.filter(t => t.id !== id);
+                refreshMainUI();
+            });
+        });
+    }
+
+    function updateSummaryAndWarnings() {
+        const { totalIncome, totalExpense } = getTotals();
+        const net = totalIncome - totalExpense;
+        document.getElementById('totalIncomeDisplay').innerHTML = `$${totalIncome.toFixed(2)}`;
+        document.getElementById('totalExpenseDisplay').innerHTML = `$${totalExpense.toFixed(2)}`;
+        const netSpan = document.getElementById('netBalanceDisplay');
+        netSpan.innerHTML = `$${net.toFixed(2)}`;
+        const warningDiv = document.getElementById('balanceWarning');
+        if (totalExpense > totalIncome) {
+            netSpan.classList.add('red-text');
+            netSpan.classList.remove('green-text');
+            warningDiv.innerHTML = '<span style="background:#fceaea; padding: 6px 16px; border-radius: 2rem; color:#c0392b;"><i class="fas fa-exclamation-triangle"></i> Alert: Expenses exceed Income! (Red status)</span>';
+            document.getElementById('totalExpenseDisplay').classList.add('red-text');
+            document.getElementById('totalExpenseDisplay').classList.remove('green-text');
+            document.getElementById('totalIncomeDisplay').classList.add('green-text');
+        } else {
+            netSpan.classList.add('green-text');
+            netSpan.classList.remove('red-text');
+            warningDiv.innerHTML = '<span style="background:#e0f2e9; padding: 6px 16px; border-radius: 2rem; color:#2e7d64;"><i class="fas fa-check-circle"></i> Healthy: Expenses are less than or equal to Income (Green status)</span>';
+            document.getElementById('totalExpenseDisplay').classList.remove('red-text');
+            document.getElementById('totalExpenseDisplay').classList.add('green-text');
+            document.getElementById('totalIncomeDisplay').classList.add('green-text');
+        }
+        if(totalExpense === totalIncome && totalIncome !==0) {
+            warningDiv.innerHTML = '<span style="background:#fff3e0; padding:6px 16px; border-radius:2rem;">Neutral: Income equals Expenses</span>';
+        }
+    }
+
+    function updateExpensePieChart() {
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        const categoryMap = new Map();
+        expenseTransactions.forEach(exp => {
+            const cat = exp.category;
+            const amt = exp.amount;
+            categoryMap.set(cat, (categoryMap.get(cat) || 0) + amt);
+        });
+        const labels = Array.from(categoryMap.keys());
+        const dataValues = Array.from(categoryMap.values());
+        const ctx = document.getElementById('expensePieChart').getContext('2d');
+        if (pieChartInstance) pieChartInstance.destroy();
+        if (labels.length === 0) {
+            pieChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: { labels: ['No Expenses'], datasets: [{ data: [1], backgroundColor: ['#cccccc'] }] },
+                options: { plugins: { legend: { position: 'bottom' } } }
+            });
+        } else {
+            pieChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8e5ea2','#3cba9f'], borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+            });
+        }
+    }
+
+    function updateTotalBudgetDisplay() {
+        const totalBudget = budgetSections.reduce((sum, s) => sum + s.amount, 0);
+        document.getElementById('totalBudgetDisplay').innerHTML = `<strong>Total Planned Budget: $${totalBudget.toFixed(2)}</strong><br><span class="badge">Sections: ${budgetSections.length}</span>`;
+    }
+
+    function updateCategorySelectOptions() {
+        const selectCat = document.getElementById('transCategory');
+        if (!selectCat) return;
+        let allCatNames = budgetSections.map(s => s.name);
+        transactions.forEach(t => { if(t.category && !allCatNames.includes(t.category)) allCatNames.push(t.category); });
+        allCatNames = [...new Set(allCatNames)];
+        if(allCatNames.length === 0) allCatNames = ['Food','Clothes'];
+        selectCat.innerHTML = '';
+        allCatNames.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            selectCat.appendChild(option);
+        });
+    }
+
+    function addTransaction() {
+        const type = document.getElementById('transType').value;
+        let category = document.getElementById('transCategory').value;
+        const description = document.getElementById('transDesc').value.trim();
+        let amount = parseFloat(document.getElementById('transAmount').value);
+        if (isNaN(amount) || amount <= 0) { alert("Valid positive amount required."); return; }
+        if (description === "") { alert("Enter description."); return; }
+        if (!budgetSections.some(s => s.name === category) && category !== "") {
+            if(confirm(`Category "${category}" not in budget sections. Create a budget section for it?`)) {
+                budgetSections.push({ id: uid(), name: category, amount: 0 });
+                refreshMainUI();
+            }
+        }
+        const newTrans = { id: uid(), type, category, description, amount, date: new Date().toLocaleDateString() };
+        transactions.push(newTrans);
+        document.getElementById('transDesc').value = '';
+        document.getElementById('transAmount').value = '';
+        refreshMainUI();
+    }
+
+    function addBudgetSection() {
+        let name = document.getElementById('newSectionName').value.trim();
+        let budgetVal = parseFloat(document.getElementById('newSectionBudget').value);
+        if (name === "") { alert("Enter section name."); return; }
+        if (isNaN(budgetVal)) budgetVal = 0;
+        if (budgetSections.some(s => s.name.toLowerCase() === name.toLowerCase())) { alert("Section exists! Use edit."); return; }
+        budgetSections.push({ id: uid(), name: name, amount: budgetVal });
+        document.getElementById('newSectionName').value = '';
+        document.getElementById('newSectionBudget').value = '0';
+        refreshMainUI();
+    }
+
+    function refreshMainUI() {
+        if(document.getElementById('mainPage').classList.contains('hidden-page')) return;
+        renderBudgetSections();
+        renderTransactionsList();
+        updateSummaryAndWarnings();
+        updateExpensePieChart();
+        updateTotalBudgetDisplay();
+        updateCategorySelectOptions();
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // ========== PAGE SWITCHING LOGIC ==========
+    const homePage = document.getElementById('homePage');
+    const mainPage = document.getElementById('mainPage');
+    const goToMainBtn = document.getElementById('goToMainBtn');
+    const backToHomeBtn = document.getElementById('backToHomeBtn');
+
+    function showHome() {
+        homePage.classList.remove('hidden-page');
+        mainPage.classList.add('hidden-page');
+    }
+    function showMain() {
+        homePage.classList.add('hidden-page');
+        mainPage.classList.remove('hidden-page');
+        refreshMainUI();  // ensure all data renders
+    }
+
+    goToMainBtn.addEventListener('click', showMain);
+    backToHomeBtn.addEventListener('click', showHome);
+
+    // Initialize data and start on home page
+    initSampleTransactions();
+    // ensure main page ui elements are ready but hidden initially. On first showMain it will call refresh
+    // pre-fill category select for initial state (but main is hidden so it's fine)
+    // also attach event listeners for main page buttons (they exist now)
+    document.getElementById('addTransactionBtn')?.addEventListener('click', addTransaction);
+    document.getElementById('addBudgetBtn')?.addEventListener('click', addBudgetSection);
+    
+    // final: ensure home page is active, main hidden, and any pre-refresh doesn't break
+    showHome();
+</script>
+</body>
+</html>
